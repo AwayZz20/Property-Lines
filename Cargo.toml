@@ -1,9 +1,10 @@
 [package]
 name = "ocs-property-lines"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "Property boundaries from survey distances and quadrant bearings for Open CAD Studio"
 license = "GPL-3.0-only"
+repository = "https://github.com/AwayZz20/Property-Lines"
 
 [workspace]
 

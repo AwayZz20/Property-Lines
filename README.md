@@ -14,15 +14,19 @@ Plugin for **Open CAD Studio `v2026.45` (API 16)** to create, sketch, convert, a
 - **Import CSV (`PL_IMPORT`)**: Imports survey tables directly from `.csv` files (see [examples/](examples/)).
 - **Persistent XDATA**: Survey definitions are stored in `OPENCAD_PROPERTY_LINES` XDATA on the polyline so drawings remain editable across save/reopen cycles.
 
-## Installation (Prebuilt Windows Binary)
+## Installation
 
-1. Download the latest release archive (`property-lines-v*-windows-x86_64.zip`) from the **Releases** page.
-2. Extract the files into your Open CAD Studio plugins directory:
-   - Windows: `%APPDATA%\OpenCADStudio\plugins\opencad.property_lines\`
-3. Ensure that folder contains:
-   - `opencad.property_lines-windows-x86_64.dll`
-   - `plugin.toml`
-4. Restart **Open CAD Studio** (`v2026.45` or compatible API 16 build). The **Property Lines** tab will appear in the ribbon.
+### Option 1: Open CAD Studio Plugin Manager (Recommended)
+
+1. Open **Open CAD Studio** -> **Plugin Manager**.
+2. Under **Add from GitHub**, enter `AwayZz20/Property-Lines` and click **Add repository**.
+3. Select the latest compatible version (`v0.4.1+`) and click **Install**, then restart Open CAD Studio.
+
+### Option 2: Manual Install (Windows x86_64)
+
+1. Download `opencad.property_lines-windows-x86_64.dll` and `plugin.toml` (or `property-lines-v*-windows-manual.zip`) from the **Releases** page.
+2. Place both files into `%APPDATA%\OpenCADStudio\plugins\opencad.property_lines\`.
+3. Restart **Open CAD Studio** (`v2026.45` / API 16). The **Property Lines** tab will appear in the ribbon.
 
 ## CSV Format
 

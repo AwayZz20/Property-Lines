@@ -38,22 +38,27 @@ jobs:
       - name: Build release plugin
         run: cargo build --release --locked
 
-      - name: Package release archive
+      - name: Stage release assets
         if: startsWith(github.ref, 'refs/tags/v')
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
-          $stage = "dist/property-lines-$tag-windows-x86_64"
+          New-Item -ItemType Directory -Force -Path "dist" | Out-Null
+          Copy-Item "target/release/ocs_property_lines.dll" "dist/opencad.property_lines-windows-x86_64.dll" -Force
+          $stage = "dist/manual-$tag"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          Copy-Item "target/release/ocs_property_lines.dll" "$stage/opencad.property_lines-windows-x86_64.dll"
-          Copy-Item "plugin.toml" "$stage/plugin.toml"
-          Copy-Item "README.md" "$stage/README.md"
-          if (Test-Path "LICENSE") { Copy-Item "LICENSE" "$stage/LICENSE" }
-          Compress-Archive -Path "$stage/*" -DestinationPath "dist/property-lines-$tag-windows-x86_64.zip" -Force
+          Copy-Item "target/release/ocs_property_lines.dll" "$stage/opencad.property_lines-windows-x86_64.dll" -Force
+          Copy-Item "plugin.toml" "$stage/plugin.toml" -Force
+          Copy-Item "README.md" "$stage/README.md" -Force
+          if (Test-Path "LICENSE") { Copy-Item "LICENSE" "$stage/LICENSE" -Force }
+          Compress-Archive -Path "$stage/*" -DestinationPath "dist/property-lines-$tag-windows-manual.zip" -Force
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: dist/property-lines-${{ github.ref_name }}-windows-x86_64.zip
+          files: |
+            dist/opencad.property_lines-windows-x86_64.dll
+            plugin.toml
+            dist/property-lines-${{ github.ref_name }}-windows-manual.zip
