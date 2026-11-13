@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Tag Segments">
+  <line x1="3" y1="18.5" x2="21" y2="18.5" stroke="#D4D6D9" stroke-width="2" stroke-dasharray="4.5 2.2" stroke-linecap="round"/>
+  <line x1="12" y1="13.5" x2="12" y2="18.5" stroke="#D4D6D9" stroke-width="1.75" stroke-linecap="round"/>
+  <rect x="4.5" y="4.5" width="15" height="9" rx="2" stroke="#6DB7ED" stroke-width="1.75" fill="#6DB7ED" fill-opacity="0.16"/>
+  <line x1="7.5" y1="7.5" x2="16.5" y2="7.5" stroke="#6DB7ED" stroke-width="1.65" stroke-linecap="round"/>
+  <line x1="9" y1="10.5" x2="15" y2="10.5" stroke="#D4D6D9" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

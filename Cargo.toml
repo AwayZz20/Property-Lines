@@ -1,0 +1,15 @@
+[package]
+name = "ocs-property-lines"
+version = "0.4.0"
+edition = "2021"
+description = "Property boundaries from survey distances and quadrant bearings for Open CAD Studio"
+license = "GPL-3.0-only"
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ocs_plugin_api = { git = "https://github.com/HakanSeven12/OpenCADStudio", tag = "v2026.45", features = ["host"] }
+csv = "1.3"

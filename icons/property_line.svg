@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Property Line">
+  <polygon points="5,18 4,8.5 12.5,4 20,9.5 17.5,19" stroke="#D4D6D9" stroke-width="1.85" stroke-dasharray="4.5 2.2 1.6 2.2" stroke-linecap="round" stroke-linejoin="round" fill="#6DB7ED" fill-opacity="0.10"/>
+  <circle cx="5" cy="18" r="2.1" fill="#6DB7ED"/>
+  <circle cx="4" cy="8.5" r="2.1" fill="#6DB7ED"/>
+  <circle cx="12.5" cy="4" r="2.1" fill="#6DB7ED"/>
+  <circle cx="20" cy="9.5" r="2.1" fill="#6DB7ED"/>
+  <circle cx="17.5" cy="19" r="2.1" fill="#6DB7ED"/>
+</svg>

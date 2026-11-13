@@ -1,0 +1,13 @@
+[plugin]
+id = "opencad.property_lines"
+name = "Property Lines"
+version = "0.4.0"
+description = "Create property lines from a table of distances, bearings, and arcs"
+license = "GPL-3.0-only"
+
+[opencad]
+api_version = 16
+host_release = "v2026.45"
+ribbon_order = 60
+command_prefixes = ["PL_"]
+xdata_apps = ["OPENCAD_PROPERTY_LINES"]

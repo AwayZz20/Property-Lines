@@ -1,0 +1,9 @@
+/target/
+/dist/
+/.codex/
+/.vscode/
+/.idea/
+*.pdb
+*.log
+.DS_Store
+Thumbs.db

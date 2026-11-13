@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Area Label m2">
+  <polygon points="4,19.5 3.5,8 12,3.5 20.5,8.5 19,19.5" stroke="#D4D6D9" stroke-width="1.8" stroke-dasharray="4 2" stroke-linejoin="round" fill="#6DB7ED" fill-opacity="0.14"/>
+  <path d="M6.8 16.5 V10.5 M6.8 11.6 C7.5 10.5 9.1 10.5 9.8 11.7 V16.5 M9.8 11.7 C10.6 10.5 12.2 10.5 12.9 11.7 V16.5" stroke="#6DB7ED" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M14.7 9.4 C14.7 8.4 17.3 8.3 17.3 9.5 C17.3 10.5 14.7 11.3 14.7 12.3 H17.5" stroke="#6DB7ED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

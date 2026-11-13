@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="By Bearings">
+  <rect x="3" y="4" width="11" height="15" rx="1.5" stroke="#D4D6D9" stroke-width="1.75" stroke-linejoin="round" fill="none"/>
+  <rect x="3" y="4" width="11" height="4.2" rx="1" fill="#6DB7ED"/>
+  <line x1="8.5" y1="8.2" x2="8.5" y2="19" stroke="#D4D6D9" stroke-width="1.5"/>
+  <line x1="3" y1="13.5" x2="14" y2="13.5" stroke="#D4D6D9" stroke-width="1.5"/>
+  <path d="M12.5 20.5 L20.5 11.5" stroke="#6DB7ED" stroke-width="2.1" stroke-linecap="round"/>
+  <polyline points="16.5,11.5 20.5,11.5 20.5,15.5" stroke="#6DB7ED" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

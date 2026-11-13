@@ -1,0 +1,5 @@
+Distance,N/S,Bearing,E/W,Type,Radius,L/R
+20,N,90,E,Line,,
+10,S,0,E,Arc,8,R
+15,S,90,W,Line,,
+,,,,Close,,
