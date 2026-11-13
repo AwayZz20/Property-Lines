@@ -1,12 +1,12 @@
 mod drafting;
 mod survey;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 
 use drafting::{
-    ensure_property_line_layer, extract_polyline, extract_polyline_for_pick, make_property_polyline,
-    read_table, table_record, XDATA_APP,
+    ensure_property_line_layer, extract_polyline, make_property_polyline, read_table, table_record,
+    XDATA_APP,
 };
 use ocs_plugin_api::dialog::{DialogControl, DialogDef, DialogResponse, DialogRow, DialogValue};
 use ocs_plugin_api::host::acadrust::LwPolyline;
@@ -72,12 +72,6 @@ impl CadModule for PropertyLinesModule {
                             label: "Rectangle",
                             icon: IconKind::Svg(include_bytes!("../icons/rectangle.svg")),
                             event: ModuleEvent::Command("PL_SKETCH_RECT".to_string()),
-                        }),
-                        RibbonItem::LargeTool(ToolDef {
-                            id: "PL_PICK_LINES",
-                            label: "Pick Lines",
-                            icon: IconKind::Svg(include_bytes!("../icons/pick_lines.svg")),
-                            event: ModuleEvent::Command("PL_PICK_LINES".to_string()),
                         }),
                     ],
                 },
@@ -217,15 +211,6 @@ impl BuiltinPlugin for PropertyLinesPlugin {
         if trimmed.eq_ignore_ascii_case("PL_SKETCH_RECT") {
             let layer = ensure_property_line_layer(host);
             host.start_interactive(Box::new(SketchRectBoundary::new(layer)));
-            return true;
-        }
-        if trimmed.eq_ignore_ascii_case("PL_PICK_LINES") {
-            self.start_or_apply_pick_lines(host);
-            return true;
-        }
-        if trimmed.eq_ignore_ascii_case("PL_PICK_LINES_APPLY") {
-            let handles = self.take_pending_picks();
-            self.apply_pick_lines(host, &handles);
             return true;
         }
         if trimmed.eq_ignore_ascii_case("PL_IMPORT") {
@@ -439,118 +424,6 @@ impl PropertyLinesPlugin {
             host.push_error("Open CAD Studio could not update the selected polyline.");
         }
         host.end_undo_group();
-    }
-
-    fn start_or_apply_pick_lines(&self, host: &mut dyn HostApi) {
-        let handles = host.selection();
-        if !handles.is_empty() {
-            self.apply_pick_lines(host, &handles);
-            return;
-        }
-        if let Ok(mut slot) = self.pending_pick.lock() {
-            slot.clear();
-        }
-        let polyline_handles: HashSet<Handle> = host
-            .document()
-            .entities()
-            .filter(|entity| {
-                matches!(
-                    entity,
-                    EntityType::LwPolyline(_)
-                        | EntityType::Polyline2D(_)
-                        | EntityType::Polyline(_)
-                        | EntityType::Polyline3D(_)
-                )
-            })
-            .map(|entity| entity.common().handle)
-            .collect();
-        host.start_interactive(Box::new(PickChainCommand {
-            handles: Vec::new(),
-            polyline_handles,
-            pending_pick: Arc::clone(&self.pending_pick),
-        }));
-    }
-
-    fn apply_pick_lines(&self, host: &mut dyn HostApi, handles: &[Handle]) {
-        if handles.is_empty() {
-            host.push_info("No lines or polylines selected.");
-            return;
-        }
-        let entities: Vec<EntityType> = handles
-            .iter()
-            .filter_map(|h| host.document().get_entity(*h).cloned())
-            .collect();
-        let refs: Vec<&EntityType> = entities.iter().collect();
-        let (points, bulges, closed) = match drafting::chain_entities_to_polyline(&refs) {
-            Ok(chain) => chain,
-            Err(error) => {
-                host.push_error(&error);
-                return;
-            }
-        };
-
-        let layer = ensure_property_line_layer(host);
-        let boundary = survey::boundary_from_points(&points, &bulges, closed);
-        let table_csv = table_from_polyline(&points, &bulges, closed);
-        let record = table_record(&table_csv);
-
-        if entities.len() == 1 && extract_polyline_for_pick(&entities[0]).is_ok() {
-            let source = &entities[0];
-            let source_layer = &source.common().layer;
-            if host
-                .document()
-                .layers
-                .get(source_layer)
-                .is_some_and(|l| l.is_locked())
-            {
-                host.push_error(&format!(
-                    "Layer '{source_layer}' is locked; unlock it before converting."
-                ));
-                return;
-            }
-            let mut updated = make_property_polyline(points[0], &boundary, &layer, &table_csv);
-            if matches!(source, EntityType::LwPolyline(_)) {
-                updated.common.handle = source.common().handle;
-                updated.common.owner_handle = source.common().owner_handle;
-                host.begin_undo_group("Convert Polyline to Property Line");
-                if host.update_entity(EntityType::LwPolyline(updated)) {
-                    host.write_record(source.common().handle, record);
-                    host.bump_geometry();
-                    host.set_dirty();
-                    host.push_info(&format!(
-                        "Converted to Property Line on layer '{layer}'. {}",
-                        format_boundary_summary(&boundary)
-                    ));
-                } else {
-                    host.push_error("Could not convert the selected polyline.");
-                }
-                host.end_undo_group();
-            } else {
-                host.begin_undo_group("Convert Polyline to Property Line");
-                let new_handle = host.add_entity(EntityType::LwPolyline(updated));
-                host.write_record(new_handle, record);
-                host.remove_entity(source.common().handle);
-                host.bump_geometry();
-                host.set_dirty();
-                host.end_undo_group();
-                host.push_info(&format!(
-                    "Converted to Property Line on layer '{layer}'. {}",
-                    format_boundary_summary(&boundary)
-                ));
-            }
-        } else {
-            let polyline = make_property_polyline(points[0], &boundary, &layer, &table_csv);
-            host.begin_undo_group("Create Property Line from Picked Lines");
-            let handle = host.add_entity(EntityType::LwPolyline(polyline));
-            host.write_record(handle, record);
-            host.bump_geometry();
-            host.set_dirty();
-            host.end_undo_group();
-            host.push_info(&format!(
-                "Created Property Line on layer '{layer}'. {}",
-                format_boundary_summary(&boundary)
-            ));
-        }
     }
 
     fn tag_selected(&self, host: &mut dyn HostApi) {
@@ -1509,7 +1382,6 @@ impl InteractiveCommand for ChooseCreationModeCommand {
                             "Create by entering distances and bearings".to_string(),
                             "Create by sketching".to_string(),
                             "Create rectangle (2 corners)".to_string(),
-                            "Pick existing lines or polylines".to_string(),
                         ],
                         default_index: 0,
                     }),
@@ -1547,15 +1419,11 @@ impl InteractiveCommand for ChooseCreationModeCommand {
                             ));
                             CommandStep::NeedPoint
                         }
-                        2 => {
+                        _ => {
                             self.state = CreationModeState::Rectangle(SketchRectBoundary::new(
                                 self.layer.clone(),
                             ));
                             CommandStep::NeedPoint
-                        }
-                        _ => {
-                            self.state = CreationModeState::Done;
-                            CommandStep::Dispatch("PL_PICK_LINES".to_string())
                         }
                     }
                 }
@@ -1838,68 +1706,6 @@ impl InteractiveCommand for PickSingleBoundaryCommand {
             *slot = vec![handle];
         }
         CommandStep::Dispatch(self.dispatch_cmd.to_string())
-    }
-
-    fn on_point(&mut self, _pt: [f64; 3]) -> CommandStep {
-        CommandStep::NeedPoint
-    }
-}
-
-struct PickChainCommand {
-    handles: Vec<Handle>,
-    polyline_handles: HashSet<Handle>,
-    pending_pick: Arc<Mutex<Vec<Handle>>>,
-}
-
-impl InteractiveCommand for PickChainCommand {
-    fn prompt(&self) -> String {
-        if self.handles.is_empty() {
-            "Pick a polyline or pick lines/arcs for Property Line (Enter to finish):".to_string()
-        } else {
-            format!(
-                "Pick lines/arcs [{} selected] (pick more or press Enter to convert):",
-                self.handles.len()
-            )
-        }
-    }
-
-    fn is_selection_gathering(&self) -> bool {
-        true
-    }
-
-    fn accepts_drag_selection(&self) -> bool {
-        true
-    }
-
-    fn on_selection_complete(&mut self, handles: Vec<Handle>) -> CommandStep {
-        if handles.is_empty() {
-            return CommandStep::NeedPoint;
-        }
-        if self.handles.is_empty()
-            && handles.len() == 1
-            && self.polyline_handles.contains(&handles[0])
-        {
-            if let Ok(mut slot) = self.pending_pick.lock() {
-                *slot = handles;
-            }
-            return CommandStep::Dispatch("PL_PICK_LINES_APPLY".to_string());
-        }
-        for handle in handles {
-            if !self.handles.contains(&handle) {
-                self.handles.push(handle);
-            }
-        }
-        CommandStep::NeedPoint
-    }
-
-    fn on_enter(&mut self) -> CommandStep {
-        if self.handles.is_empty() {
-            return CommandStep::Cancel;
-        }
-        if let Ok(mut slot) = self.pending_pick.lock() {
-            *slot = std::mem::take(&mut self.handles);
-        }
-        CommandStep::Dispatch("PL_PICK_LINES_APPLY".to_string())
     }
 
     fn on_point(&mut self, _pt: [f64; 3]) -> CommandStep {
@@ -2487,9 +2293,8 @@ ocs_plugin_api::export_plugin!(PropertyLinesPlugin::default());
 mod existing_polyline_tests {
     use super::*;
     use ocs_plugin_api::host::acadrust::entities::mtext::AttachmentPoint;
-    use ocs_plugin_api::host::acadrust::entities::{Arc as CadArc, Line};
     use ocs_plugin_api::host::acadrust::xdata::XDataValue;
-    use ocs_plugin_api::host::acadrust::{Vector2, Vector3};
+    use ocs_plugin_api::host::acadrust::Vector2;
 
     #[test]
     fn imports_closed_existing_polyline_as_survey_table() {
@@ -2747,28 +2552,6 @@ mod existing_polyline_tests {
     }
 
     #[test]
-    fn chains_mixed_ordered_and_reversed_lines_and_arc_into_closed_boundary() {
-        let e1 = EntityType::Line(Line::from_coords(0.0, 0.0, 0.0, 10.0, 0.0, 0.0));
-        // Reversed second line
-        let e2 = EntityType::Line(Line::from_coords(10.0, 10.0, 0.0, 10.0, 0.0, 0.0));
-        // Quarter-circle arc from (10,10) to (0,10)? Center (5,10), radius 5: angles 0..PI
-        let arc = CadArc::from_center_radius_angles(
-            Vector3::new(5.0, 10.0, 0.0),
-            5.0,
-            0.0,
-            std::f64::consts::PI,
-        );
-        let e3 = EntityType::Arc(arc);
-        let e4 = EntityType::Line(Line::from_coords(0.0, 10.0, 0.0, 0.0, 0.0, 0.0));
-
-        let (points, bulges, closed) =
-            drafting::chain_entities_to_polyline(&[&e1, &e2, &e3, &e4]).unwrap();
-        assert!(closed);
-        assert_eq!(points.len(), 4);
-        assert!((bulges[2] - 1.0).abs() < 1.0e-8);
-    }
-
-    #[test]
     fn formats_bearings_tags_and_bearings_table_correctly() {
         assert_eq!(
             survey::format_quadrant_bearing(13.5, 0.0, survey::BearingFormat::Spaced),
@@ -2903,6 +2686,7 @@ mod existing_polyline_tests {
         }
         assert!(command_ids.contains(&"PL_AREA"));
         assert!(command_ids.contains(&"PL_TABLE"));
+        assert!(!command_ids.contains(&"PL_PICK_LINES"));
 
         // First run: sketch mode
         let mut chooser_sketch =
@@ -2998,38 +2782,11 @@ mod existing_polyline_tests {
     }
 
     #[test]
-    fn pick_lines_handles_polylines_with_widths_and_single_click_and_north_block() {
+    fn north_arrow_block_and_table_title_work_cleanly() {
         assert_eq!(
             drafting::effective_table_title("   "),
             "Rumbos y Distancias"
         );
-
-        let mut wide = LwPolyline::new();
-        wide.is_closed = true;
-        wide.constant_width = 0.15;
-        wide.add_point_with_bulge(Vector2::new(0.0, 0.0), 0.0);
-        wide.add_point_with_bulge(Vector2::new(10.0, 0.0), 0.0);
-        wide.add_point_with_bulge(Vector2::new(10.0, 10.0), 0.0);
-        wide.add_point_with_bulge(Vector2::new(0.0, 10.0), 0.0);
-        let mut wide_entity = EntityType::LwPolyline(wide);
-        wide_entity.common_mut().handle = Handle::new(301);
-
-        let (pts, _bulges, closed) =
-            drafting::chain_entities_to_polyline(&[&wide_entity]).expect("pick wide polyline");
-        assert!(closed);
-        assert_eq!(pts.len(), 4);
-
-        let pending_pick = Arc::new(Mutex::new(Vec::new()));
-        let mut poly_set = HashSet::new();
-        poly_set.insert(Handle::new(301));
-        let mut pick_cmd = PickChainCommand {
-            handles: Vec::new(),
-            polyline_handles: poly_set,
-            pending_pick: Arc::clone(&pending_pick),
-        };
-        let step = pick_cmd.on_selection_complete(vec![Handle::new(301)]);
-        assert!(matches!(step, CommandStep::Dispatch(ref s) if s == "PL_PICK_LINES_APPLY"));
-        assert_eq!(*pending_pick.lock().unwrap(), vec![Handle::new(301)]);
 
         let pending_north = Arc::new(Mutex::new(None));
         let mut north_cmd = NorthArrowCommand {

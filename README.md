@@ -4,8 +4,7 @@ Plugin for **Open CAD Studio `v2026.45` (API 16)** to create, sketch, convert, a
 
 ## Features
 
-- **Property Line (`PL_CREATE`)**: Chooser dialog to create property boundaries by **Distances & Bearings** (`PL_TABLE_MODE`), **Interactive Sketch** (`PL_SKETCH`), **2-Corner Rectangle** (`PL_SKETCH_RECT`), or **Pick Lines** (`PL_PICK_LINES`).
-- **Pick Lines (`PL_PICK_LINES`)**: Click an existing polyline (or pick connected lines/arcs and press `Enter`) to convert geometry into a Property Line on the `Property Line` layer with `PROPERTY_LINE` linetype and stored survey XDATA.
+- **Property Line (`PL_CREATE`)**: Chooser dialog to create property boundaries by **Distances & Bearings** (`PL_TABLE_MODE`), **Interactive Sketch** (`PL_SKETCH`), or **2-Corner Rectangle** (`PL_SKETCH_RECT`).
 - **Sketch Mode (`PL_SKETCH`, `PL_SKETCH_RECT`)**: Live viewport preview showing segment distance and quadrant bearing, snapping/closing smoothly back to the start point or on `Enter`.
 - **Edit Table (`PL_EDIT`)**: Opens any property boundary polyline in the survey table editor to modify bearings, distances, or arc parameters while keeping XDATA synchronized.
 - **Tag Segments (`PL_TAG`)**: Annotates boundary edges on the outward side with rotated `MText` bearing + distance labels and optional perpendicular midpoint tick marks.

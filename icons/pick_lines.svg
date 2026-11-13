@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Pick Lines">
-  <line x1="4" y1="17.5" x2="17.5" y2="4" stroke="#6DB7ED" stroke-width="2.1" stroke-dasharray="4.5 2.2" stroke-linecap="round"/>
-  <circle cx="4" cy="17.5" r="2.1" fill="#6DB7ED"/>
-  <circle cx="17.5" cy="4" r="2.1" fill="#6DB7ED"/>
-  <polygon points="12.5,10 12.5,20 15.3,17.6 17.7,21.5 19.7,20.3 17.3,16.4 20.6,16.1" stroke="#D4D6D9" stroke-width="1.4" stroke-linejoin="round" fill="#D4D6D9"/>
-</svg>

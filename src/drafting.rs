@@ -238,46 +238,31 @@ pub fn remove_existing_annotations(
 }
 
 pub fn extract_polyline(entity: &EntityType) -> Result<(Vec<[f64; 3]>, Vec<f64>, bool), String> {
-    extract_polyline_with_policy(entity, true)
-}
-
-pub fn extract_polyline_for_pick(
-    entity: &EntityType,
-) -> Result<(Vec<[f64; 3]>, Vec<f64>, bool), String> {
-    extract_polyline_with_policy(entity, false)
-}
-
-fn extract_polyline_with_policy(
-    entity: &EntityType,
-    reject_widths: bool,
-) -> Result<(Vec<[f64; 3]>, Vec<f64>, bool), String> {
-    if reject_widths {
-        if let EntityType::LwPolyline(polyline) = entity {
-            if polyline.constant_width.abs() > 1.0e-9
-                || polyline
-                    .vertices
-                    .iter()
-                    .any(|v| v.start_width.abs() > 1.0e-9 || v.end_width.abs() > 1.0e-9)
-            {
-                return Err(
-                    "Polylines with segment widths cannot be converted without changing their appearance."
-                        .to_string(),
-                );
-            }
+    if let EntityType::LwPolyline(polyline) = entity {
+        if polyline.constant_width.abs() > 1.0e-9
+            || polyline
+                .vertices
+                .iter()
+                .any(|v| v.start_width.abs() > 1.0e-9 || v.end_width.abs() > 1.0e-9)
+        {
+            return Err(
+                "Polylines with segment widths cannot be converted without changing their appearance."
+                    .to_string(),
+            );
         }
-        if let EntityType::Polyline2D(polyline) = entity {
-            if polyline.start_width.abs() > 1.0e-9
-                || polyline.end_width.abs() > 1.0e-9
-                || polyline
-                    .vertices
-                    .iter()
-                    .any(|v| v.start_width.abs() > 1.0e-9 || v.end_width.abs() > 1.0e-9)
-            {
-                return Err(
-                    "Polylines with segment widths cannot be converted without changing their appearance."
-                        .to_string(),
-                );
-            }
+    }
+    if let EntityType::Polyline2D(polyline) = entity {
+        if polyline.start_width.abs() > 1.0e-9
+            || polyline.end_width.abs() > 1.0e-9
+            || polyline
+                .vertices
+                .iter()
+                .any(|v| v.start_width.abs() > 1.0e-9 || v.end_width.abs() > 1.0e-9)
+        {
+            return Err(
+                "Polylines with segment widths cannot be converted without changing their appearance."
+                    .to_string(),
+            );
         }
     }
     let (points, bulges, closed): (Vec<[f64; 3]>, Vec<f64>, bool) = match entity {
@@ -341,208 +326,6 @@ fn extract_polyline_with_policy(
     let z0 = points[0][2];
     if points.iter().any(|point| (point[2] - z0).abs() > 1.0e-7) {
         return Err("Only planar polylines can be used as property lines.".to_string());
-    }
-    Ok((points, bulges, closed))
-}
-
-#[derive(Clone, Copy)]
-struct PrimitiveEdge {
-    start: [f64; 3],
-    end: [f64; 3],
-    bulge: f64,
-}
-
-fn points_match_2d(a: [f64; 3], b: [f64; 3], tol: f64) -> bool {
-    (a[0] - b[0]).hypot(a[1] - b[1]) <= tol
-}
-
-/// Converts either a single existing polyline or a connected chain of `Line`, `Arc`,
-/// and polyline entities into ordered planar `(points, bulges, closed)` suitable for a property line.
-pub fn chain_entities_to_polyline(
-    entities: &[&EntityType],
-) -> Result<(Vec<[f64; 3]>, Vec<f64>, bool), String> {
-    if entities.is_empty() {
-        return Err("Select a polyline or connected lines/arcs first.".to_string());
-    }
-    if entities.len() == 1 {
-        if let Ok(poly) = extract_polyline_for_pick(entities[0]) {
-            return Ok(poly);
-        }
-    }
-
-    let mut edges = Vec::with_capacity(entities.len());
-    for entity in entities {
-        match entity {
-            EntityType::LwPolyline(_)
-            | EntityType::Polyline2D(_)
-            | EntityType::Polyline(_)
-            | EntityType::Polyline3D(_) => {
-                let (pts, bulges, closed) = extract_polyline_for_pick(entity)?;
-                let seg_count = if closed { pts.len() } else { pts.len().saturating_sub(1) };
-                for idx in 0..seg_count {
-                    let start = pts[idx];
-                    let end = pts[(idx + 1) % pts.len()];
-                    if (start[0] - end[0]).hypot(start[1] - end[1]) <= 1.0e-8 {
-                        continue;
-                    }
-                    edges.push(PrimitiveEdge {
-                        start,
-                        end,
-                        bulge: bulges.get(idx).copied().unwrap_or(0.0),
-                    });
-                }
-            }
-            EntityType::Line(line) => {
-                let start = [line.start.x, line.start.y, line.start.z];
-                let end = [line.end.x, line.end.y, line.end.z];
-                if !start.iter().chain(end.iter()).all(|v| v.is_finite()) {
-                    return Err("Selected line contains non-finite coordinates.".to_string());
-                }
-                if (start[0] - end[0]).hypot(start[1] - end[1]) <= 1.0e-8 {
-                    continue;
-                }
-                edges.push(PrimitiveEdge {
-                    start,
-                    end,
-                    bulge: 0.0,
-                });
-            }
-            EntityType::Arc(arc) => {
-                if arc.normal.x.abs() > 1.0e-7
-                    || arc.normal.y.abs() > 1.0e-7
-                    || (arc.normal.z - 1.0).abs() > 1.0e-7
-                {
-                    return Err("Only arcs in the XY plane can be converted.".to_string());
-                }
-                let sweep = arc.sweep_angle();
-                if sweep <= 1.0e-8 || arc.radius <= 1.0e-8 {
-                    continue;
-                }
-                let start = [
-                    arc.center.x + arc.radius * arc.start_angle.cos(),
-                    arc.center.y + arc.radius * arc.start_angle.sin(),
-                    arc.center.z,
-                ];
-                let end = [
-                    arc.center.x + arc.radius * arc.end_angle.cos(),
-                    arc.center.y + arc.radius * arc.end_angle.sin(),
-                    arc.center.z,
-                ];
-                let bulge = (sweep / 4.0).tan();
-                edges.push(PrimitiveEdge { start, end, bulge });
-            }
-            _ => {
-                return Err(
-                    "Pick Lines supports polylines, lines, or connected arcs.".to_string(),
-                );
-            }
-        }
-    }
-
-    if edges.is_empty() {
-        return Err("No valid line or arc segments found in selection.".to_string());
-    }
-
-    let z0 = edges[0].start[2];
-    if edges
-        .iter()
-        .any(|e| (e.start[2] - z0).abs() > 1.0e-6 || (e.end[2] - z0).abs() > 1.0e-6)
-    {
-        return Err("All picked lines and arcs must lie on the same XY elevation.".to_string());
-    }
-
-    let tol = 1.0e-4;
-    let mut used = vec![false; edges.len()];
-    let mut chain = vec![edges[0]];
-    used[0] = true;
-
-    // Grow forward from chain tail
-    loop {
-        let tail = chain.last().unwrap().end;
-        let head = chain.first().unwrap().start;
-        if chain.len() >= 2 && points_match_2d(tail, head, tol) {
-            break;
-        }
-        let mut found = None;
-        for (i, edge) in edges.iter().enumerate() {
-            if used[i] {
-                continue;
-            }
-            if points_match_2d(edge.start, tail, tol) {
-                found = Some((i, *edge));
-                break;
-            }
-            if points_match_2d(edge.end, tail, tol) {
-                found = Some((
-                    i,
-                    PrimitiveEdge {
-                        start: edge.end,
-                        end: edge.start,
-                        bulge: -edge.bulge,
-                    },
-                ));
-                break;
-            }
-        }
-        let Some((idx, next_edge)) = found else {
-            break;
-        };
-        used[idx] = true;
-        chain.push(next_edge);
-    }
-
-    // Grow backward from chain head if not yet closed
-    loop {
-        let tail = chain.last().unwrap().end;
-        let head = chain.first().unwrap().start;
-        if chain.len() >= 2 && points_match_2d(tail, head, tol) {
-            break;
-        }
-        let mut found = None;
-        for (i, edge) in edges.iter().enumerate() {
-            if used[i] {
-                continue;
-            }
-            if points_match_2d(edge.end, head, tol) {
-                found = Some((i, *edge));
-                break;
-            }
-            if points_match_2d(edge.start, head, tol) {
-                found = Some((
-                    i,
-                    PrimitiveEdge {
-                        start: edge.end,
-                        end: edge.start,
-                        bulge: -edge.bulge,
-                    },
-                ));
-                break;
-            }
-        }
-        let Some((idx, prev_edge)) = found else {
-            break;
-        };
-        used[idx] = true;
-        chain.insert(0, prev_edge);
-    }
-
-    if used.iter().any(|u| !*u) {
-        return Err(
-            "Selected lines and arcs do not form a single connected chain (endpoints must meet within 0.0001)."
-                .to_string(),
-        );
-    }
-
-    let closed = chain.len() >= 3 && points_match_2d(chain.last().unwrap().end, chain[0].start, tol);
-    let mut points = Vec::with_capacity(chain.len() + usize::from(!closed));
-    let mut bulges = Vec::with_capacity(chain.len() + usize::from(!closed));
-    for edge in &chain {
-        points.push(edge.start);
-        bulges.push(edge.bulge);
-    }
-    if !closed {
-        points.push(chain.last().unwrap().end);
-        bulges.push(0.0);
     }
     Ok((points, bulges, closed))
 }
