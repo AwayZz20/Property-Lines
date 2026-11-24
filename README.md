@@ -1,6 +1,6 @@
 # Property Lines for Open CAD Studio
 
-Plugin for **Open CAD Studio `v2026.46` (API 23)** to create, sketch, edit, annotate, and schedule property boundaries using survey distances, quadrant bearings, and arcs.
+Plugin for **Open CAD Studio `v2026.47` (API 28)** to create, sketch, edit, annotate, and schedule property boundaries using survey distances, quadrant bearings, and arcs.
 
 ## Features
 
@@ -20,13 +20,13 @@ Plugin for **Open CAD Studio `v2026.46` (API 23)** to create, sketch, edit, anno
 
 1. Open **Open CAD Studio** -> **Plugin Manager**.
 2. Search for **Property Lines** in the **Plugins** list (or under **Add from GitHub**, enter `AwayZz20/Property-Lines` and click **Add repository**).
-3. Select the latest compatible version (`v0.4.2+`) and click **Install**, then restart Open CAD Studio.
+3. Select the latest compatible version (`v0.4.3+`) and click **Install**, then restart Open CAD Studio.
 
 ### Option 2: Manual Install (Windows x86_64)
 
 1. Download `opencad.property_lines-windows-x86_64.dll` and `plugin.toml` (or `property-lines-v*-windows-manual.zip`) from the **Releases** page.
 2. Place both files into `%APPDATA%\OpenCADStudio\plugins\opencad.property_lines\`.
-3. Restart **Open CAD Studio** (`v2026.46` / API 23). The **Property Lines** tab will appear in the ribbon.
+3. Restart **Open CAD Studio** (`v2026.47` / API 28). The **Property Lines** tab will appear in the ribbon.
 
 ## CSV Format
 
@@ -61,6 +61,6 @@ Licensed under **GPL-3.0-only**. See [LICENSE](LICENSE).
 
 ## References
 
-- [Open CAD Studio Plugin Template](https://github.com/HakanSeven12/OpenCADStudio/tree/v2026.46/docs/plugin-template-v2)
-- [Open CAD Studio Plugin Architecture & API](https://github.com/HakanSeven12/OpenCADStudio/blob/v2026.46/docs/plugin-architecture.md)
-- [API 23 Host Contract](https://github.com/HakanSeven12/OpenCADStudio/blob/v2026.46/crates/ocs_plugin_api/src/host.rs)
+- [Open CAD Studio Plugin Template](https://github.com/HakanSeven12/OpenCADStudio/tree/v2026.47/docs/plugin-template-v2)
+- [Open CAD Studio Plugin Architecture & API](https://github.com/HakanSeven12/OpenCADStudio/blob/v2026.47/docs/plugin-architecture.md)
+- [API 28 Host Contract](https://github.com/HakanSeven12/OpenCADStudio/blob/v2026.47/crates/ocs_plugin_api/src/host.rs)
